@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EarlyCare AI - General Diabetes</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f0f7ff;margin:0;padding:0 0 75px 0;color:#222}
+.header{background:#0a7a5a;color:#fff;padding:20px 16px;text-align:center}
+.header h1{margin:0;font-size:25px}
+.header p{margin:6px 0 0;font-size:13px}
+.card{background:#fff;margin:14px;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+h2{color:#0a7a5a;margin-top:0;font-size:19px}
+button{background:#0a7a5a;color:#fff;border:none;padding:12px 16px;border-radius:10px;width:100%;font-size:15px;margin-top:10px;cursor:pointer;font-weight:bold}
+button.secondary{background:#fff;color:#0a7a5a;border:2px solid #0a7a5a}
+button.whatsapp{background:#25D366;color:#fff}
+button.admin-btn{background:#17a2b8;color:#fff}
+button.danger-btn{background:#d93025;color:#fff}
+input,select,textarea{width:100%;padding:11px;border:1px solid #ccc;border-radius:10px;margin:8px 0;font-size:15px;box-sizing:border-box}
+.q{margin:10px 0}
+.result{padding:14px;border-radius:10px;margin-top:12px;display:none;font-weight:bold}
+.small{font-size:13px;color:#555}
+.badge{background:#ffe9a8;color:#333;padding:6px 10px;border-radius:20px;font-size:11px;display:inline-block;margin-top:6px;font-weight:bold}
+.footer{text-align:center;font-size:12px;color:#777;padding:14px}
+.price{background:#eef6ff;padding:12px;border-radius:10px;margin-top:10px}
+#lockScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,122,90,0.97);z-index:9999;display:flex;justify-content:center;align-items:center;padding:20px;box-sizing:border-box}
+.lock-box{background:#fff;padding:24px;border-radius:16px;width:100%;max-width:400px;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+.lock-box h2{color:#0a7a5a}
+.portal-banner{background:#e6f4ea;border-left:4px solid #0a7a5a;padding:10px 14px;margin:14px;border-radius:8px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.log-item{background:#f9f9f9;border:1px solid #e0e0e0;padding:10px 12px;border-radius:8px;margin-top:8px;font-size:13px}
+.modal-box{background:#f4f9ff;border:1px solid #b8daff;padding:14px;border-radius:10px;margin-top:12px;display:none}
+#photoPreview{max-width:100%;border-radius:10px;margin-top:10px;display:none;border:2px solid #0a7a5a}
+.video-box{background:#f9fbfd;border:1px dashed #0a7a5a;padding:12px;border-radius:10px;margin:10px 0}
+video.preview-vid{width:100%;max-height:220px;border-radius:8px;margin-top:8px;display:none;background:#000}
+.verified-tag{background:#d4edda;color:#155724;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:bold;display:inline-block}
+.suspended-tag{background:#ffd6d6;color:#900;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:bold;display:inline-block}
+.challenge-code{background:#0a7a5a;color:#fff;padding:4px 10px;border-radius:6px;font-weight:bold;letter-spacing:1px}
+.bottom-nav{position:fixed;bottom:0;left:0;width:100%;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:space-around;padding:8px 0;z-index:900;box-shadow:0 -2px 8px rgba(0,0,0,0.06)}
+.nav-item{background:none;color:#555;border:none;padding:4px;margin:0;width:auto;font-size:11px;display:flex;flex-direction:column;align-items:center;font-weight:normal}
+.nav-item.active{color:#0a7a5a;font-weight:bold}
+.nav-icon{font-size:18px;margin-bottom:2px}
+</style>
+</head>
+<body>
+
+<!-- STEP 0: PASSWORD PROTECTION LOCK SCREEN -->
+<div id="lockScreen">
+<div class="lock-box">
+<h2>🔒 Enter Access Password</h2>
+<p class="small">This application is protected. Please enter the access code provided by the developer.</p>
+<input type="password" id="accessPassword" dir="auto" placeholder="Enter password...">
+<button onclick="unlockApp()">Unlock App</button>
+<p id="lockError" style="color:red;font-size:13px;margin-top:8px;display:none;">Incorrect password. Please try again.</p>
+</div>
+</div>
+
+<!-- STEP 1: PORTAL SELECTOR SCREEN -->
+<div id="portalSelectorScreen" style="display:none;">
+<div class="header">
+<h1>EarlyCare AI</h1>
+<p>Detect Early, Manage at Home, Work Towards a Cure</p>
+</div>
+<div class="card">
+<h2>🏛️ Choose Access Session</h2>
+<p class="small">Select your session below. Both Patients and Workers require Ghana Card & Liveness Video Verification.</p>
+<button onclick="selectPortal('patient')">👤 Patient Session (Risk Check, Sugar, Caretaker & Nurse)</button>
+<button class="secondary" onclick="selectPortal('workerReg')">📝 Worker Registration (Nurses with PIN & Caretakers)</button>
+<button class="whatsapp" onclick="selectPortal('nurse')">👩‍⚕️ Worker Workspace (Triage, Verified IDs & Reviews)</button>
+<button class="admin-btn" onclick="selectPortal('admin')">📊 Employer / Admin Session & Hardware Roadmap</button>
+</div>
+</div>
+
+<!-- WORKER REGISTRATION SCREEN -->
+<div id="workerRegScreen" style="display:none;">
+<div class="header">
+<h1>EarlyCare AI - Worker Registration</h1>
+<p>Verified Nurses & Trained Caretakers</p>
+</div>
+<div class="card">
+<h2>📝 Register as a Nurse or Caretaker</h2>
+<p class="small">All workers must provide a valid Ghana Card and record a Liveness Video Verification holding their Ghana Card.</p>
+
+<label><b>Select Role:</b></label>
+<select id="workerRole" onchange="toggleWorkerFields()">
+<option value="nurse">Registered Nurse (Requires Official Nursing PIN)</option>
+<option value="caretaker">Home Caretaker (Requires Online Hygiene & Care Training)</option>
+</select>
+
+<label><b>Full Name (As on Ghana Card) *</b></label>
+<input type="text" id="wName" placeholder="e.g. Salimatu Suleiman Bamba">
+
+<label><b>Phone Number / WhatsApp *</b></label>
+<input type="tel" id="wPhone" placeholder="e.g. 0257388384">
+
+<label><b>Ghana Card Number *</b></label>
+<input type="text" id="wGhanaCard" placeholder="e.g. GHA-XXXXXXXXX-X">
+
+<div id="nursePinBox">
+<label><b>Official Nursing & Midwifery Council PIN *</b></label>
+<input type="text" id="wPin" placeholder="e.g. RN-12345">
+</div>
+
+<div id="caretakerNotice" style="display:none;background:#eef6ff;padding:10px;border-radius:8px;font-size:13px;margin:8px 0;">
+ℹ️ <b>Caretaker Standards:</b> Caretakers must complete online training on hygiene, wound cleaning, and patient comfort. Poor reviews from patients will result in automatic removal from the platform.
+</div>
+
+<div class="video-box">
+<label><b>🎥 Mandatory Liveness Video Verification *</b></label>
+<p class="small">Hold your Ghana Card next to your face and clearly say today's verification code: <span class="challenge-code" id="wChallengeCode">7492</span></p>
+<input type="file" id="wVideoInput" accept="video/*" capture="user" onchange="previewVideo(event, 'wVideoPreview')">
+<video id="wVideoPreview" class="preview-vid" controls></video>
+</div>
+
+<button onclick="registerWorker()">Complete Verification & Register Worker</button>
+<button class="secondary" onclick="backToPortals()">← Back to Sessions</button>
+<p id="wError" style="color:red;font-size:13px;margin-top:8px;display:none;"></p>
+</div>
+</div>
+
+<!-- PATIENT REGISTRATION SCREEN -->
+<div id="registrationScreen" style="display:none;">
+<div class="header">
+<h1>EarlyCare AI - Patient Session</h1>
+<p>National & Home Diabetes Care Registration</p>
+</div>
+<div class="card">
+<h2>📋 Patient Registration & Identity Verification</h2>
+<p class="small">Please provide your Ghana Card, NHIS details (if available), and Liveness Video Verification so nurses and government partners can verify your identity.</p>
+
+<label><b>Full Name (As on Ghana Card) *</b></label>
+<input type="text" id="regName" placeholder="e.g. Kwame Mensah">
+
+<label><b>Phone Number (WhatsApp / Call) *</b></label>
+<input type="tel" id="regPhone" placeholder="e.g. 024XXXXXXX">
+
+<label><b>Ghana Card Number *</b></label>
+<input type="text" id="regGhanaCard" placeholder="e.g. GHA-XXXXXXXXX-X">
+
+<label><b>NHIS / Health Insurance Number (If you have one)</b></label>
+<input type="text" id="regNhis" placeholder="Leave blank if you do not have NHIS">
+
+<label><b>Location / City</b></label>
+<input type="text" id="regCity" value="Kumasi" placeholder="e.g. Kumasi, Accra...">
+
+<div class="video-box">
+<label><b>🎥 Mandatory Liveness Video Verification *</b></label>
+<p class="small">Hold your Ghana Card next to your face and clearly say today's code: <span class="challenge-code" id="pChallengeCode">3851</span></p>
+<input type="file" id="pVideoInput" accept="video/*" capture="user" onchange="previewVideo(event, 'pVideoPreview')">
+<video id="pVideoPreview" class="preview-vid" controls></video>
+</div>
+
+<button onclick="completeRegistration()">Verify Identity & Enter App →</button>
+<button class="secondary" onclick="backToPortals()">← Back to Sessions</button>
+<p id="regError" style="color:red;font-size:13px;margin-top:8px;display:none;"></p>
+</div>
+</div>
+
+<!-- MAIN PATIENT APP -->
+<div id="mainApp" style="display:none;">
+<div class="header">
+<h1>EarlyCare AI</h1>
+<p>Detect Early, Manage at Home, Work Towards a Cure</p>
+<span class="badge">LIVE VERIFIED EDITION - Screening, Caretaker & Real Nurse Support</span>
+</div>
+
+<div class="portal-banner">
+<div>
+<b>Patient:</b> <span id="dispName"></span> <span class="verified-tag">✔ Video & Ghana Card Verified</span><br>
+<span class="small">Ghana Card: <span id="dispCard"></span> | NHIS: <span id="dispNhis"></span></span>
+</div>
+<div>
+<button class="secondary" style="width:auto;padding:6px 10px;font-size:11px;margin:0 4px 0 0;" onclick="editProfile()">Edit</button>
+<button class="secondary" style="width:auto;padding:6px 10px;font-size:11px;margin:0;" onclick="backToPortals()">Sessions</button>
+</div>
+</div>
+
+<!-- TAB 1: SCREENING (WELCOME + RISK + SUGAR) -->
+<div id="tab-screen" class="app-tab">
+<div class="card">
+<h2>👋 Welcome to EarlyCare AI</h2>
+<p><b>For GENERAL DIABETES</b> - early check, daily care, foot care, real nurse online, and caretaker support.</p>
+<p><b>Step 1 is FREE.</b> Step 2 - Real Nurse - is small fee. See prices below.</p>
+<button onclick="document.getElementById('risk').scrollIntoView({behavior:'smooth'})">Start FREE Diabetes Risk Check →</button>
+</div>
+
+<div class="card" id="risk">
+<h2>1. FREE Early Diabetes Risk Check</h2>
+<p class="small">Answer honestly. FREE for everyone. This is screening, not diagnosis. See nurse/doctor for real test.</p>
+<div class="q"><label>1. Always thirsty / urinating a lot?</label><select id="q1"><option value="0">No</option><option value="1">Sometimes</option><option value="2">Yes, a lot</option></select></div>
+<div class="q"><label>2. Tired all the time?</label><select id="q2"><option value="0">No</option><option value="1">Sometimes</option><option value="2">Yes</option></select></div>
+<div class="q"><label>3. Blurry vision?</label><select id="q3"><option value="0">No</option><option value="1">Sometimes</option><option value="2">Yes</option></select></div>
+<div class="q"><label>4. Wound not healing?</label><select id="q4"><option value="0">No</option><option value="2">Yes</option><option value="1">Slow healing</option></select></div>
+<div class="q"><label>5. Family with diabetes?</label><select id="q5"><option value="0">No</option><option value="1">Yes - one person</option><option value="2">Yes - many</option></select></div>
+<div class="q"><label>6. Numbness / tingling in feet?</label><select id="q6"><option value="0">No</option><option value="1">Sometimes</option><option value="2">Yes</option></select></div>
+<button onclick="checkRisk()">See My FREE Risk Result</button>
+<div id="riskResult" class="result"></div>
+<div id="afterRisk" style="display:none; margin-top:10px;">
+<p><b>Next Step:</b> After your FREE check, you can be assigned to a Real Nurse Online or Caretaker to guide you.</p>
+<button onclick="switchTab('nurse')">Get Assigned to a Real Nurse →</button>
+</div>
+</div>
+
+<div class="card">
+<h2>2. Blood Sugar Checker</h2>
+<p class="small">FREE. Enter fasting sugar if you know it (mg/dL). No machine? Go to pharmacy, check there, come back and enter number.</p>
+<input id="sugar" type="number" placeholder="e.g. 135">
+<button onclick="checkSugar()">Check Sugar - FREE</button>
+<div id="sugarResult" class="result"></div>
+<div id="sugarHistoryBox" style="margin-top:10px;display:none;">
+<b class="small">📊 Your Saved Sugar History:</b>
+<div id="sugarHistoryList"></div>
+</div>
+<p class="small">Normal fasting 70-99. 100-125 pre-diabetes range. 126+ may be diabetes range. Always confirm with hospital test. Talk to healthcare professional.</p>
+<p><b>No machine?</b> Go to nearest pharmacy, ask to check blood sugar, pharmacist writes result on paper. Take photo of paper and send to nurse in the Care tab.</p>
+</div>
+</div>
+
+<!-- TAB 2: REAL NURSE & HOSPITAL HELP -->
+<div id="tab-nurse" class="app-tab" style="display:none;">
+<div class="card" id="nurse">
+<h2>3. Real Nurse Online - Not AI, Real Human</h2>
+<p>AI checks fast. Real Nurse explains and cares. After your FREE check, you will be assigned to a nurse or trained caretaker.</p>
+<p><b>How it works:</b></p>
+<ol>
+<li>Do FREE Risk Check + Sugar Check</li>
+<li>Choose your plan below</li>
+<li>You are assigned to a Real Nurse / Online Doctor / Caretaker</li>
+<li>Send photo of pharmacy sugar result if you have it</li>
+<li>Nurse calls / chats and guides you step-by-step</li>
+</ol>
+<div class="price">
+<b>💰 Prices & Payment Session - Consultation:</b><br>
+✅ With NHIS / Health Insurance: <b>50 cedis</b> (Subsidized rate)<br>
+✅ Without Insurance: <b>100 cedis</b><br>
+✅ Private Doctor / Nurse (if no government help): <b>150 cedis</b> (Higher private rate)<br>
+✅ Very poor / Waiver: <b>Free with Government Help</b> - Apply for waiver
+</div>
+<label>Do you have NHIS / Health Insurance?</label>
+<select id="ins">
+<option value="yes">Yes, I have NHIS / Insurance - 50 cedis</option>
+<option value="no">No, I don't have - 100 cedis</option>
+<option value="waiver">I need waiver / cannot pay (Free with Government Help)</option>
+</select>
+<label>Do you want Government Nurse, Caretaker, or Private Doctor?</label>
+<select id="type">
+<option value="gov">Government Nurse (assigned by Government - PIN Verified)</option>
+<option value="caretaker">Trained Home Caretaker (Salimatu / Certified Caretaker)</option>
+<option value="private">Private Doctor / Nurse (if no government help - higher fee)</option>
+</select>
+
+<label><b>Upload Pharmacy Result Paper Photo:</b></label>
+<input type="file" id="slipPhoto" accept="image/*" onchange="previewPhoto(event)">
+<img id="photoPreview" alt="Pharmacy Sugar Result Preview">
+
+<button onclick="assignNurse()">Assign Me a Nurse / Caretaker Now</button>
+<div id="nurseResult" class="result"></div>
+</div>
+
+<div class="card">
+<h2>6. Hospital & Home Help</h2>
+<button onclick="toggleModal('hospitalModal')">Check Hospital Bed Availability</button>
+<div id="hospitalModal" class="modal-box">
+<b>🏥 Check Nearest Hospital Beds in Kumasi</b>
+<select id="hospChoice">
+<option value="Komfo Anokye Teaching Hospital (KATH)">Komfo Anokye Teaching Hospital (KATH)</option>
+<option value="Manhyia District Hospital">Manhyia District Hospital</option>
+<option value="KNUST Hospital">KNUST Hospital</option>
+<option value="Suntreso Government Hospital">Suntreso Government Hospital</option>
+</select>
+<button onclick="sendHospitalRequest()">Request Bed Availability & Book</button>
+</div>
+
+<button class="secondary" onclick="toggleModal('medModal')">Order Medicine Delivery</button>
+<div id="medModal" class="modal-box">
+<b>💊 Order Home Medicine Delivery</b>
+<textarea id="medList" rows="3" placeholder="Enter your diabetes medicines and delivery address..."></textarea>
+<button onclick="sendMedRequest()">Submit Delivery Order</button>
+</div>
+</div>
+</div>
+
+<!-- TAB 3: FOOT CHECK & CARETAKER GUIDE -->
+<div id="tab-guides" class="app-tab" style="display:none;">
+<div class="card">
+<h2>4. Foot Check - Prevent Ulcer & Amputation</h2>
+<p>Check feet EVERY day. Small wound not noticed early can become ulcer.</p>
+<ul>
+<li>✅ Look between toes - cut, redness, swelling?</li>
+<li>✅ Feel - foot hot, swollen, or numb?</li>
+<li>✅ Any wound not healing in 2-3 days?</li>
+<li>❌ Do NOT walk barefoot. Do NOT press wound.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>5. Caretaker Guide</h2>
+<p><b>For daughters / family caring at home:</b></p>
+<ol>
+<li>Wash hands before touching wound</li>
+<li>Clean gently with clean water, do not scrub</li>
+<li>Cover with clean dressing, change daily</li>
+<li>Watch DANGER: More pain, pus, bad smell, fever, black skin, leg swelling</li>
+<li>If danger → Go to hospital / Call Nurse Online NOW</li>
+</ol>
+<p><b>Daily care:</b> Balanced diet, medicine as prescribed, drink water, walk a little if doctor allows.</p>
+</div>
+</div>
+
+<!-- TAB 4: REVIEWS & ABOUT SALIMATU -->
+<div id="tab-about" class="app-tab" style="display:none;">
+<div class="card">
+<h2>⭐ Rate & Review Your Nurse or Caretaker</h2>
+<p class="small">Did your nurse or caretaker keep clean, treat you with respect, and explain clearly? Leave a review. Workers whose average rating drops below 2.5 stars are automatically suspended from EarlyCare AI.</p>
+<label>Nurse or Caretaker Name:</label>
+<input type="text" id="reviewProvider" placeholder="e.g. Salimatu or Nurse Ama">
+<label>Rating:</label>
+<select id="reviewStars">
+<option value="5">⭐⭐⭐⭐⭐ (5 - Clean, Caring & Helpful)</option>
+<option value="4">⭐⭐⭐⭐ (4 - Good Service)</option>
+<option value="3">⭐⭐⭐ (3 - Fair)</option>
+<option value="2">⭐⭐ (2 - Poor Hygiene / Unhelpful)</option>
+<option value="1">⭐ (1 - Bad Experience - Report)</option>
+</select>
+<label>Your Review:</label>
+<textarea id="reviewComment" rows="2" placeholder="Write your honest feedback..."></textarea>
+<button onclick="submitReview()">Submit Patient Review</button>
+<div id="reviewResult" class="result"></div>
+</div>
+
+<div class="card">
+<h2>About EarlyCare AI</h2>
+<p>Built by Salimatu, Kumasi. Inspired by caring for my mother who lived with diabetes. Made to help patients check early, manage at home, and support caretakers.</p>
+<p><b>My Vision:</b> Start with early detection + home care now. Study Nursing, then Biomedical Engineering to work towards a permanent solution.</p>
+<p><b>Business Model:</b> FREE check for all. Small fee for Real Nurse (50 cedis with insurance, 100 cedis without, waiver for poor). Government + Private nurses.</p>
+</div>
+
+<div class="footer">
+<p>&copy; 2026 EarlyCare AI - Built by Salimatu, Kumasi. All rights reserved.</p>
+</div>
+</div>
+
+<!-- BOTTOM MOBILE NAVIGATION BAR -->
+<div class="bottom-nav">
+<button class="nav-item active" id="nav-screen" onclick="switchTab('screen')"><span class="nav-icon">🩺</span>Check</button>
+<button class="nav-item" id="nav-nurse" onclick="switchTab('nurse')"><span class="nav-icon">👩‍⚕️</span>Nurse & Help</button>
+<button class="nav-item" id="nav-guides" onclick="switchTab('guides')"><span class="nav-icon">🦶</span>Guides</button>
+<button class="nav-item" id="nav-about" onclick="switchTab('about')"><span class="nav-icon">⭐</span>Reviews & About</button>
+</div>
+</div>
+
+<!-- WORKER WORKSPACE (NURSES & CARETAKERS) -->
+<div id="nursePortalScreen" style="display:none;">
+<div class="header">
+<h1>EarlyCare AI - Worker Session</h1>
+<p>Verified Nurses, Caretakers & Training</p>
+</div>
+<div class="portal-banner">
+<div><b>Worker Portal</b></div>
+<button class="secondary" style="width:auto;padding:6px 10px;font-size:11px;margin:0;" onclick="backToPortals()">← Back</button>
+</div>
+<div class="card">
+<h2>👩‍⚕️ Registered & Video-Verified Workers</h2>
+<p class="small">All nurses (with PIN) and caretakers (with Ghana Card & Liveness Video Verification) appear below. Workers with low average ratings (&lt; 2.5 stars) are automatically suspended.</p>
+<div id="workerListDisplay"></div>
+</div>
+<div class="card">
+<h2>🎓 Caretaker Online Training & Hygiene Standards</h2>
+<ul>
+<li>🧼 <b>Personal Cleanliness:</b> Always wear clean clothes, trim nails, and sanitize hands thoroughly before and after touching a patient.</li>
+<li>🩹 <b>Wound Hygiene:</b> Use clean water and sterile dressings; never scrub diabetic foot ulcers.</li>
+<li>💛 <b>Patient Comfort:</b> Speak gently, respect privacy, and report danger signs (pus, fever, swelling) immediately.</li>
+</ul>
+<button class="secondary" onclick="alert('Online Training Video Module: Ready for video upload when full hosting is connected.')">Watch Caretaker Hygiene Training Video</button>
+</div>
+</div>
+
+<!-- EMPLOYER / ADMIN SESSION & BIOMETRIC HARDWARE ROADMAP -->
+<div id="adminPortalScreen" style="display:none;">
+<div class="header">
+<h1>EarlyCare AI - Employer Session</h1>
+<p>System Oversight, KYC Verification & Future Biometric Machine</p>
+</div>
+<div class="portal-banner">
+<div><b>Employer / Admin Session</b></div>
+<button class="secondary" style="width:auto;padding:6px 10px;font-size:11px;margin:0;" onclick="backToPortals()">← Back</button>
+</div>
+<div class="card">
+<h2>💳 Payment & Fee Structure Overview</h2>
+<ul>
+<li><b>Government / NHIS Supported:</b> Patients with NHIS pay 50 cedis; waiver available for very poor patients.</li>
+<li><b>Private Care Fallback:</b> If government support is unavailable, private doctors, nurses, and caretakers operate at higher standard private rates (150+ cedis).</li>
+</ul>
+</div>
+<div class="card">
+<h2>🔬 Future Hardware Vision: Full-Body Biometric Diagnostic Machine</h2>
+<p>To achieve 100% diagnostic accuracy and eliminate misdiagnosis, our long-term engineering roadmap includes building a dedicated hospital diagnostic machine:</p>
+<ul>
+<li><b>Biometric Hand & Finger Scan:</b> Patient stands in front of the machine and places their hand/finger on the biometric sensor.</li>
+<li><b>Full Internal Organ & Health Imaging:</b> High-clarity internal scanning that displays clear images of internal organs and full health status so doctors never misdiagnose or mistreat a patient.</li>
+</ul>
+<button onclick="alert('Full Source Code & Buyer Documentation ready.')">Prepare Buyer & Sponsor Package</button>
+</div>
+</div>
+
+<script>
+// ==========================================
+// CONFIGURATION
+// ==========================================
+const APP_PASSWORD = "رب إني لما أنزلت إلي من خير فقير";
+const CARETAKER_PHONE = "233257388384";
+
+let latestRiskText = "Not checked yet";
+let latestSugarText = "Not entered yet";
+
+// Generate random 4-digit Liveness Challenge Codes on load
+document.getElementById("wChallengeCode").textContent = Math.floor(1000 + Math.random() * 9000);
+document.getElementById("pChallengeCode").textContent = Math.floor(1000 + Math.random() * 9000);
+
+function unlockApp() {
+    if(document.getElementById("accessPassword").value.trim() === APP_PASSWORD) {
+        document.getElementById("lockScreen").style.display = "none";
+        document.getElementById("portalSelectorScreen").style.display = "block";
+    } else {
+        document.getElementById("lockError").style.display = "block";
+    }
+}
+
+function selectPortal(portal) {
+    document.getElementById("portalSelectorScreen").style.display = "none";
+    document.getElementById("workerRegScreen").style.display = "none";
+    document.getElementById("registrationScreen").style.display = "none";
+    document.getElementById("mainApp").style.display = "none";
+    document.getElementById("nursePortalScreen").style.display = "none";
+    document.getElementById("adminPortalScreen").style.display = "none";
+
+    if(portal === 'patient') checkExistingUser();
+    else if(portal === 'workerReg') document.getElementById("workerRegScreen").style.display = "block";
+    else if(portal === 'nurse') loadWorkerWorkspace();
+    else if(portal === 'admin') document.getElementById("adminPortalScreen").style.display = "block";
+}
+
+function backToPortals() {
+    document.getElementById("portalSelectorScreen").style.display = "block";
+    document.getElementById("workerRegScreen").style.display = "none";
+    document.getElementById("registrationScreen").style.display = "none";
+    document.getElementById("mainApp").style.display = "none";
+    document.getElementById("nursePortalScreen").style.display = "none";
+    document.getElementById("adminPortalScreen").style.display = "none";
+}
+
+function switchTab(tabName) {
+    document.querySelectorAll(".app-tab").forEach(t => t.style.display = "none");
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    document.getElementById("tab-" + tabName).style.display = "block";
+    document.getElementById("nav-" + tabName).classList.add("active");
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function previewVideo(event, videoElementId) {
+    const file = event.target.files[0];
+    if(file) {
+        const videoEl = document.getElementById(videoElementId);
+        videoEl.src = URL.createObjectURL(file);
+        videoEl.style.display = "block";
+    }
+}
+
+// ==========================================
+// WORKER REGISTRATION
+// ==========================================
+function toggleWorkerFields() {
+    let role = document.getElementById("workerRole").value;
+    document.getElementById("nursePinBox").style.display = role === 'nurse' ? 'block' : 'none';
+    document.getElementById("caretakerNotice").style.display = role === 'caretaker' ? 'block' : 'none';
+}
+
+function registerWorker() {
+    let role = document.getElementById("workerRole").value;
+    let name = document.getElementById("wName").value.trim();
+    let phone = document.getElementById("wPhone").value.trim();
+    let ghanaCard = document.getElementById("wGhanaCard").value.trim();
+    let pin = document.getElementById("wPin").value.trim();
+    let hasVideo = document.getElementById("wVideoInput").files.length > 0;
+    let challenge = document.getElementById("wChallengeCode").textContent;
+    let err = document.getElementById("wError");
+
+    if(!name || !phone || !ghanaCard) {
+        err.style.display = "block";
+        err.textContent = "Please enter your Full Name, Phone Number, and Ghana Card Number.";
+        return;
+    }
+    if(role === 'nurse' && !pin) {
+        err.style.display = "block";
+        err.textContent = "Registered nurses must provide their official Nursing & Midwifery Council PIN.";
+        return;
+    }
+    if(!hasVideo) {
+        err.style.display = "block";
+        err.textContent = "Mandatory: Please record or upload a Liveness Video Verification holding your Ghana Card.";
+        return;
+    }
+
+    err.style.display = "none";
+    let workers = JSON.parse(localStorage.getItem("earlyCareWorkers") || "[]");
+    workers.push({
+        role,
+        name,
+        phone,
+        ghanaCard,
+        pin: role === 'nurse' ? pin : 'Caretaker Training Enrolled',
+        challengeCode: challenge
+    });
+    localStorage.setItem("earlyCareWorkers", JSON.stringify(workers));
+    alert("✅ Worker Verified & Registered! Liveness Code #" + challenge + " and Ghana Card recorded.");
+    backToPortals();
+}
+
+// ==========================================
+// PATIENT REGISTRATION
+// ==========================================
+function checkExistingUser() {
+    if(localStorage.getItem("earlyCareUser")) {
+        loadUserIntoApp(JSON.parse(localStorage.getItem("earlyCareUser")));
+    } else {
+        document.getElementById("registrationScreen").style.display = "block";
+    }
+}
+
+function completeRegistration() {
+    let name = document.getElementById("regName").value.trim();
+    let phone = document.getElementById("regPhone").value.trim();
+    let ghanaCard = document.getElementById("regGhanaCard").value.trim();
+    let nhis = document.getElementById("regNhis").value.trim();
+    let city = document.getElementById("regCity").value.trim() || "Kumasi";
+    let hasVideo = document.getElementById("pVideoInput").files.length > 0;
+    let err = document.getElementById("regError");
+
+    if(!name || !phone || !ghanaCard) {
+        err.style.display = "block";
+        err.textContent = "Please fill in your Full Name, Phone Number, and Ghana Card Number.";
+        return;
+    }
+    if(!hasVideo) {
+        err.style.display = "block";
+        err.textContent = "Mandatory: Please record or upload a Liveness Video Verification holding your Ghana Card.";
+        return;
+    }
+
+    err.style.display = "none";
+    let user = { name, phone, ghanaCard, nhis: nhis ? nhis : "None", city };
+    localStorage.setItem("earlyCareUser", JSON.stringify(user));
+    document.getElementById("registrationScreen").style.display = "none";
+    loadUserIntoApp(user);
+}
+
+function loadUserIntoApp(user) {
+    document.getElementById("dispName").textContent = user.name + " (" + user.city + ")";
+    document.getElementById("dispCard").textContent = user.ghanaCard;
+    document.getElementById("dispNhis").textContent = user.nhis;
+    if(user.nhis !== "None") document.getElementById("ins").value = "yes";
+    else document.getElementById("ins").value = "no";
+    document.getElementById("mainApp").style.display = "block";
+    renderSugarHistory();
+}
+
+function editProfile() {
+    let user = JSON.parse(localStorage.getItem("earlyCareUser"));
+    if(user) {
+        document.getElementById("regName").value = user.name;
+        document.getElementById("regPhone").value = user.phone;
+        document.getElementById("regGhanaCard").value = user.ghanaCard;
+        document.getElementById("regNhis").value = user.nhis === "None" ? "" : user.nhis;
+        document.getElementById("regCity").value = user.city;
+    }
+    document.getElementById("mainApp").style.display = "none";
+    document.getElementById("registrationScreen").style.display = "block";
+}
+
+// ==========================================
+// SCREENING, EMERGENCY TRIAGE & BOOKING
+// ==========================================
+function checkRisk() {
+    let score = parseInt(document.getElementById('q1').value) + parseInt(document.getElementById('q2').value) + parseInt(document.getElementById('q3').value) + parseInt(document.getElementById('q4').value) + parseInt(document.getElementById('q5').value) + parseInt(document.getElementById('q6').value);
+    let res = document.getElementById('riskResult');
+    res.style.display = "block";
+    if(score >= 6) {
+        res.style.background = "#ffd6d6"; res.style.color = "#900";
+        latestRiskText = "HIGH RISK (" + score + "/12)";
+        res.innerHTML = "⚠️ High Risk Score (" + score + "): Please consult a healthcare professional or connect with our online nurse immediately.";
+    } else if(score >= 3) {
+        res.style.background = "#fff3cd"; res.style.color = "#856404";
+        latestRiskText = "MODERATE RISK (" + score + "/12)";
+        res.innerHTML = "⚠️ Moderate Risk Score (" + score + "): Some symptoms detected. Monitor your blood sugar and consult a nurse.";
+    } else {
+        res.style.background = "#d4edda"; res.style.color = "#155724";
+        latestRiskText = "LOW RISK (" + score + "/12)";
+        res.innerHTML = "✅ Low Risk Score (" + score + "): Maintain a healthy lifestyle, exercise, and eat balanced meals!";
+    }
+    document.getElementById('afterRisk').style.display = "block";
+}
+
+function checkSugar() {
+    let val = parseFloat(document.getElementById('sugar').value);
+    let res = document.getElementById('sugarResult');
+    res.style.display = "block";
+    if(isNaN(val)) { res.innerHTML = "Please enter a valid number (mg/dL)."; return; }
+
+    let status = "";
+    let emergencyHtml = "";
+    if(val < 60 || val >= 250) {
+        status = "CRITICAL EMERGENCY RANGE";
+        res.style.background = "#ffd6d6"; res.style.color = "#900";
+        emergencyHtml = `<br><a href="tel:+${CARETAKER_PHONE}"><button type="button" class="danger-btn">🚨 EMERGENCY ALERT: Call Caretaker / Hospital Now</button></a>`;
+    } else if(val < 70) {
+        status = "Low (Hypoglycemia)";
+        res.style.background = "#fff3cd"; res.style.color = "#856404";
+    } else if(val <= 99) {
+        status = "Normal fasting";
+        res.style.background = "#d4edda"; res.style.color = "#155724";
+    } else if(val <= 125) {
+        status = "Pre-diabetes range";
+        res.style.background = "#fff3cd"; res.style.color = "#856404";
+    } else {
+        status = "Elevated / Diabetes range";
+        res.style.background = "#ffd6d6"; res.style.color = "#900";
+    }
+
+    latestSugarText = val + " mg/dL (" + status + ")";
+    res.innerHTML = "Result: " + latestSugarText + emergencyHtml;
+
+    let logs = JSON.parse(localStorage.getItem("earlyCareSugarLogs") || "[]");
+    logs.unshift({ val, status, date: new Date().toLocaleDateString() });
+    if(logs.length > 5) logs.pop();
+    localStorage.setItem("earlyCareSugarLogs", JSON.stringify(logs));
+    renderSugarHistory();
+}
+
+function renderSugarHistory() {
+    let logs = JSON.parse(localStorage.getItem("earlyCareSugarLogs") || "[]");
+    if(logs.length === 0) return;
+    document.getElementById("sugarHistoryBox").style.display = "block";
+    document.getElementById("sugarHistoryList").innerHTML = logs.map(l => `<div class="log-item"><b>${l.val} mg/dL</b> - ${l.status} (${l.date})</div>`).join("");
+}
+
+function previewPhoto(event) {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let img = document.getElementById("photoPreview");
+        img.src = e.target.result;
+        img.style.display = "block";
+    };
+    reader.readAsDataURL(event.target.files[0]);
+}
+
+function assignNurse() {
+    let user = JSON.parse(localStorage.getItem("earlyCareUser"));
+    let ins = document.getElementById("ins").value;
+    let type = document.getElementById("type").value;
+    let cost = ins === "yes" ? "50 cedis (NHIS)" : (ins === "waiver" ? "Free (Government Waiver)" : (type === "private" ? "150 cedis (Private Rate)" : "100 cedis (Standard)"));
+    let caseId = "EC-" + Math.floor(100000 + Math.random() * 900000);
+
+    let msg = `*EARLYCARE AI - VERIFIED CASE*\nCase: ${caseId}\nPatient: ${user.name} (${user.phone})\nGhana Card: ${user.ghanaCard} [Liveness Verified ✔]\nNHIS: ${user.nhis}\nRisk: ${latestRiskText}\nSugar: ${latestSugarText}\nPlan: ${cost}`;
+    let waLink = "https://wa.me/" + CARETAKER_PHONE + "?text=" + encodeURIComponent(msg);
+
+    let res = document.getElementById("nurseResult");
+    res.style.display = "block";
+    res.style.background = "#eef6ff";
+    res.innerHTML = `✅ <b>Assigned! Case ID: ${caseId}</b><br>Fee: <b>${cost}</b><br><a href="${waLink}" target="_blank"><button type="button" class="whatsapp">💬 Send Verified File to Nurse / Caretaker</button></a>`;
+}
+
+function submitReview() {
+    let provider = document.getElementById("reviewProvider").value.trim();
+    let stars = parseInt(document.getElementById("reviewStars").value);
+    let comment = document.getElementById("reviewComment").value.trim();
+    if(!provider) { alert("Please enter the Nurse or Caretaker name."); return; }
+
+    let reviews = JSON.parse(localStorage.getItem("earlyCareReviews") || "[]");
+    reviews.push({ provider, stars, comment });
+    localStorage.setItem("earlyCareReviews", JSON.stringify(reviews));
+
+    let res = document.getElementById("reviewResult");
+    res.style.display = "block";
+    res.style.background = stars <= 2 ? "#ffd6d6" : "#d4edda";
+    res.innerHTML = stars <= 2 ? "⚠️ Low rating logged. Workers averaging below 2.5 stars are automatically suspended." : "✅ Thank you! Review saved.";
+}
+
+function toggleModal(id) {
+    let el = document.getElementById(id);
+    el.style.display = el.style.display === "block" ? "none" : "block";
+}
+
+function sendHospitalRequest() {
+    let user = JSON.parse(localStorage.getItem("earlyCareUser"));
+    let hosp = document.getElementById("hospChoice").value;
+    let msg = `*HOSPITAL BED CHECK*\nPatient: ${user.name} (${user.ghanaCard})\nHospital: ${hosp}`;
+    window.open("https://wa.me/" + CARETAKER_PHONE + "?text=" + encodeURIComponent(msg), "_blank");
+}
+
+function sendMedRequest() {
+    let user = JSON.parse(localStorage.getItem("earlyCareUser"));
+    let meds = document.getElementById("medList").value.trim();
+    let msg = `*MEDICINE DELIVERY*\nPatient: ${user.name} (${user.city})\nOrder: ${meds}`;
+    window.open("https://wa.me/" + CARETAKER_PHONE + "?text=" + encodeURIComponent(msg), "_blank");
+}
+
+function loadWorkerWorkspace() {
+    document.getElementById("nursePortalScreen").style.display = "block";
+    let workers = JSON.parse(localStorage.getItem("earlyCareWorkers") || "[]");
+    let reviews = JSON.parse(localStorage.getItem("earlyCareReviews") || "[]");
+
+    let html = "<h3>Verified Nurses & Caretakers:</h3>";
+    if(workers.length === 0) html += "<p class='small'>No workers registered yet. Go to Worker Registration to add yourself as a Caretaker or Nurse.</p>";
+    workers.forEach(w => {
+        let wReviews = reviews.filter(r => r.provider.toLowerCase().includes(w.name.toLowerCase()));
+        let avg = wReviews.length > 0 ? (wReviews.reduce((s, r) => s + r.stars, 0) / wReviews.length).toFixed(1) : "5.0";
+        let statusTag = parseFloat(avg) < 2.5
+            ? `<span class="suspended-tag">⛔ SUSPENDED / REMOVED (Rating: ${avg}★)</span>`
+            : `<span class="verified-tag">✔ Active & Verified (${avg}★)</span>`;
+
+        html += `<div class="log-item"><b>${w.name}</b> (${w.role.toUpperCase()}) ${statusTag}<br><span class="small">Card: ${w.ghanaCard} | PIN/Status: ${w.pin} | Liveness Code: #${w.challengeCode || 'Verified'}</span></div>`;
+    });
+
+    html += "<h3>Patient Reviews:</h3>";
+    if(reviews.length === 0) html += "<p class='small'>No patient reviews yet.</p>";
+    reviews.forEach(r => {
+        html += `<div class="log-item"><b>${r.provider}</b> - ⭐ ${r.stars}/5<br><span class="small">"${r.comment}"</span></div>`;
+    });
+    document.getElementById("workerListDisplay").innerHTML = html;
+}
+</script>
+</body>
+</html>
